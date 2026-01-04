@@ -1,0 +1,19 @@
+node_modules/
+
+# ビルド成果物
+dist/
+build/
+
+# 開発用ファイル
+.env.local
+.env.development
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# その他
+.git/
+.gitignore
+README.md

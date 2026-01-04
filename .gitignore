@@ -1,0 +1,69 @@
+# ===== Frontend (Vite/React) =====
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== 環境変数・機密情報 =====
+.env
+.env.local
+.env.*.local
+*.env
+
+# ===== macOS =====
+.AppleDouble
+.LSOverride
+
+# ===== Windows =====
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===== Backend (Spring Boot) =====
+backend/build/
+backend/.gradle/
+backend/gradle/
+backend/out/
+backend/target/
+backend/*.jar
+backend/*.war
+backend/*.class
+backend/.settings/
+backend/.classpath
+backend/.project
+backend/bin/
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== データベースバックアップ =====
+*.sql
+*.dump
+backup/
+*.bak
+
+# ===== その他 =====
+*.tmp
+*.temp
+.cache/
+coverage/

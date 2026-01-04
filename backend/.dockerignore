@@ -1,0 +1,14 @@
+build/
+.gradle/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# その他
+.git/
+.gitignore
+README.md
