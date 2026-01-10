@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Concept, Word } from './type';
+import MarkdownRenderer from './MarkdownRenderer';
 
 type SearchResultsProps = {
   concepts: Concept[];
@@ -29,9 +30,9 @@ function SearchResults({ concepts }: SearchResultsProps) {
           onClick={() => navigate(`/concepts/${concept.id}`)}
         >
           <CardContent>
-            <Typography variant="h6" sx={{ fontSize: '1rem' }}>
-              {concept.notes}
-            </Typography>
+            <Box sx={{ fontSize: '1rem' }}>
+              <MarkdownRenderer content={concept.notes} />
+            </Box>
             {concept.words && concept.words.length > 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {concept.words.map((w: Word) => w.word).join(', ')}

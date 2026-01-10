@@ -17,6 +17,10 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { apiUrl } from './api';
+import MarkdownRenderer from './MarkdownRenderer';
+
+
 
 function ConceptDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +37,7 @@ function ConceptDetail() {
   const [editingNotes, setEditingNotes] = useState('');
 
   useEffect(() => {
-    fetch(`/api/concepts/${id}`)
+    fetch(apiUrl(`/api/concepts/${id}`))
       .then(res => res.json())
       .then((data: Concept) => {
         setConcept(data);
@@ -42,7 +46,7 @@ function ConceptDetail() {
 
   const handleCreateWord = async () => {
     try {
-      const response = await fetch(`/api/concepts/${id}/words`, {
+      const response = await fetch(apiUrl(`/api/concepts/${id}/words`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newWord)
@@ -73,7 +77,7 @@ function ConceptDetail() {
 
     try {
       const response = await fetch(
-        `/api/concepts/${id}/words/${editingWord.id}`,
+       apiUrl( `/api/concepts/${id}/words/${editingWord.id}`),
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -101,7 +105,7 @@ function ConceptDetail() {
 
     try {
       const response = await fetch(
-        `/api/concepts/${id}/words/${wordId}`,
+        apiUrl(`/api/concepts/${id}/words/${wordId}`),
         { method: 'DELETE' }
       );
 
@@ -123,7 +127,7 @@ function ConceptDetail() {
 
   const handleUpdateConcept = async () => {
     try {
-      const response = await fetch(`/api/concepts/${id}`, {
+      const response = await fetch(apiUrl(`/api/concepts/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: editingNotes })
@@ -148,7 +152,7 @@ function ConceptDetail() {
     }
 
     try {
-      const response = await fetch(`/api/concepts/${id}`, {
+      const response = await fetch(apiUrl(`/api/concepts/${id}`), {
         method: 'DELETE'
       });
 
@@ -167,9 +171,9 @@ function ConceptDetail() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          {concept.notes}
-        </Typography>
+        <Box sx={{ flex: 1 }}>
+          <MarkdownRenderer content={concept.notes} />
+        </Box>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button

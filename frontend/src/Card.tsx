@@ -3,6 +3,7 @@ import { Card, CardContent, Typography, Box, IconButton, Chip } from '@mui/mater
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type { Word } from './type';
+import MarkdownRenderer from './MarkdownRenderer';
 
 type WordCardProps = {
   word: Word;
@@ -65,9 +66,9 @@ export function WordCard({ word, onEdit, onDelete }: WordCardProps) {
           </Typography>
         )}
         {word.nuance && (
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {word.nuance}
-          </Typography>
+          <Box sx={{ mt: 1 }}>
+            <MarkdownRenderer content={word.nuance} />
+          </Box>
         )}
       </CardContent>
     </Card>

@@ -13,6 +13,8 @@ import {
   DialogActions,
   TextField
 } from '@mui/material';
+import { apiUrl } from './api';
+
 
 function Root() {
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -26,7 +28,7 @@ function Root() {
     if (!trimmedNotes) return;
 
     try {
-      const response = await fetch('/api/concepts', {
+      const response = await fetch(apiUrl('/api/concepts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: trimmedNotes }),
@@ -51,7 +53,7 @@ function Root() {
       ? `/api/concepts/search?keyword=${encodeURIComponent(searchKeyword)}`
       : `/api/concepts`;
 
-    fetch(url)
+    fetch(apiUrl(url))
       .then(res => res.json())
       .then((data: Concept[]) => {
         setSearchResults(data);
