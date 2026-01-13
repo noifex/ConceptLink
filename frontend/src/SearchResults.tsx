@@ -27,7 +27,7 @@ function SearchResults({ concepts }: SearchResultsProps) {
             cursor: 'pointer',
             '&:hover': { backgroundColor: 'grey.100' }
           }}
-          onClick={() => navigate(`/concepts/${concept.id}`)}
+          onClick={() => navigate(`concepts/${concept.id}`)}
         >
           <CardContent>
             <Box sx={{ fontSize: '1rem' }}>

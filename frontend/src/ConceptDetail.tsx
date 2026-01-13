@@ -158,7 +158,7 @@ function ConceptDetail() {
 
       if (!response.ok) throw new Error('削除失敗');
 
-      navigate('/');
+      navigate('/app');
     } catch (error) {
       console.error('削除エラー', error);
     }
