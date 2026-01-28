@@ -12,9 +12,9 @@ import java.util.Optional;
 @Repository
 public interface ConceptRepository extends JpaRepository<Concept, Long> {
 
-    // 検索（Concept notes OR Word word）
+    // 検索（Concept name OR Concept notes OR Word word）
     @Query("SELECT DISTINCT c FROM Concept c LEFT JOIN FETCH c.words w " +
-            "WHERE c.notes LIKE CONCAT('%', :keyword, '%') OR w.word LIKE CONCAT('%', :keyword, '%')")
+            "WHERE c.name LIKE CONCAT('%', :keyword, '%') OR c.notes LIKE CONCAT('%', :keyword, '%') OR w.word LIKE CONCAT('%', :keyword, '%')")
     List<Concept> searchByKeyword(@Param("keyword") String keyword);
 
     // 全件取得（検索なし）

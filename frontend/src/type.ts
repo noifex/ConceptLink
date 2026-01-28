@@ -8,6 +8,7 @@ export type Word = {
 
 export type Concept = {
   id: number;
+  name: string;
   notes: string;
   words?: Word[];
 };

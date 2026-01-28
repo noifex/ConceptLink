@@ -4,7 +4,7 @@ import SearchBox from './SearchBox';
 import SearchResults from './SearchResults';
 import { useState, useEffect } from 'react';
 import type { Concept } from './type';
-import { Button, Stack, Box } from '@mui/material';
+import { Button, Stack, Box, Snackbar, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Dialog,
@@ -15,23 +15,51 @@ import {
 } from '@mui/material';
 import { apiUrl } from './api';
 
+// Outlet context type for passing data to child routes
+export type RootOutletContext = {
+  onConceptDelete: (conceptId: number) => Promise<void>;
+};
+
 
 function Root() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Concept[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [newName, setNewName] = useState("");
   const [newNotes, setNewNotes] = useState("");
 
-  // Concept作成
-  const handleCreate = async () => {
-    const trimmedNotes = newNotes.trim();
-    if (!trimmedNotes) return;
+  // Error notification state
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Concept作成 (Optimistic Update)
+  const handleCreate = async () => {
+    const trimmedName = newName.trim();
+    const trimmedNotes = newNotes.trim();
+    if (!trimmedName) return;
+
+    // 1. Create temporary concept with negative ID
+    const tempId = -Date.now();
+    const tempConcept: Concept = {
+      id: tempId,
+      name: trimmedName,
+      notes: trimmedNotes,
+      words: []
+    };
+
+    // 2. Optimistically add to list immediately
+    setSearchResults((prev) => [tempConcept, ...prev]);
+
+    // 3. Close modal and clear form right away
+    setIsFormOpen(false);
+    setNewName("");
+    setNewNotes("");
+
+    // 4. Send request to server in background
     try {
       const response = await fetch(apiUrl('/api/concepts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: trimmedNotes }),
+        body: JSON.stringify({ name: trimmedName, notes: trimmedNotes }),
       });
 
       if (!response.ok) {
@@ -39,11 +67,50 @@ function Root() {
       }
 
       const newConcept: Concept = await response.json();
-      setSearchResults((prev) => [newConcept, ...prev]);
-      setIsFormOpen(false);
-      setNewNotes("");
+
+      // 5. Replace temporary concept with real one from server
+      setSearchResults((prev) =>
+        prev.map((concept) =>
+          concept.id === tempId ? newConcept : concept
+        )
+      );
     } catch (error) {
       console.error('作成エラー', error);
+
+      // 6. On error: remove temporary concept and show notification
+      setSearchResults((prev) =>
+        prev.filter((concept) => concept.id !== tempId)
+      );
+      setErrorMessage('Conceptの作成に失敗しました。もう一度お試しください。');
+    }
+  };
+
+  // Optimistic delete handler for child routes
+  const handleConceptDeleteFromChild = async (conceptId: number): Promise<void> => {
+    // Save the concept for potential rollback
+    const deletedConcept = searchResults.find(c => c.id === conceptId);
+    if (!deletedConcept) return;
+
+    // 1. Optimistically remove from search results
+    setSearchResults((prev) => prev.filter(c => c.id !== conceptId));
+
+    // 2. Send delete request in background
+    try {
+      const response = await fetch(apiUrl(`/api/concepts/${conceptId}`), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('削除に失敗しました');
+      }
+
+      // Success - concept is deleted from both UI and server
+    } catch (error) {
+      console.error('削除エラー', error);
+
+      // 3. On error: restore the concept and show notification
+      setSearchResults((prev) => [deletedConcept, ...prev].sort((a, b) => b.id - a.id));
+      setErrorMessage('Conceptの削除に失敗しました。再度お試しください。');
     }
   };
 
@@ -90,7 +157,7 @@ function Root() {
 
       {/* 右側：詳細エリア */}
       <Grid size={{ xs: 12, md: 9 }}>
-        <Outlet />
+        <Outlet context={{ onConceptDelete: handleConceptDeleteFromChild } satisfies RootOutletContext} />
       </Grid>
 
       {/* 新規作成モーダル */}
@@ -105,7 +172,17 @@ function Root() {
           <TextField
             autoFocus
             margin="dense"
-            label="Notes"
+            label="Concept Name"
+            type="text"
+            fullWidth
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="概念の名前を入力してください"
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Notes (Optional)"
             type="text"
             fullWidth
             multiline
@@ -119,11 +196,28 @@ function Root() {
           <Button onClick={() => setIsFormOpen(false)}>
             キャンセル
           </Button>
-          <Button onClick={handleCreate} variant="contained" disabled={!newNotes.trim()}>
+          <Button onClick={handleCreate} variant="contained" disabled={!newName.trim()}>
             作成
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Error Notification Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setErrorMessage(null)}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Grid>
   );
 }

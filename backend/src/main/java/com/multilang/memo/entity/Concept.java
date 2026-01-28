@@ -13,6 +13,7 @@ public class Concept {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
+    private  String name;
     private  String notes;
 
     @OneToMany(mappedBy = "concept",cascade = CascadeType.ALL)

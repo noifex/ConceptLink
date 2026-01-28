@@ -53,6 +53,7 @@ public class ConceptController {
     public Concept update(@PathVariable Long id ,@RequestBody Concept concept){
         Concept existing =conceptRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Concept not found"));
+        existing.setName(concept.getName());
         existing.setNotes(concept.getNotes());
         return  conceptRepository.save(existing);
     }

@@ -2,11 +2,16 @@ import { createBrowserRouter } from "react-router-dom";
 import Root from "./Root";
 import ConceptDetail from "./ConceptDetail";
 import LandingPage from "./pages/LandingPage";
+import AnimationDemo from './pages/AnimationDemo';
 
 const router=createBrowserRouter([
     {
         path:"/",
         Component:LandingPage
+    },
+    {
+        path:"/animation-demo",
+        Component:AnimationDemo
     },
     {
         path:"/app",

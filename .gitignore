@@ -67,3 +67,5 @@ backup/
 *.temp
 .cache/
 coverage/
+
+CLAUDE.md

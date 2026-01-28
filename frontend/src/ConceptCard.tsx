@@ -16,11 +16,16 @@ function ConceptCard({ concept, onClick }: ConceptCardProps) {
       }}
     >
       <CardContent>
-        <Typography variant="h6">
-          {concept.notes}
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          {concept.name}
         </Typography>
+        {concept.notes && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {concept.notes.length > 100 ? concept.notes.substring(0, 100) + '...' : concept.notes}
+          </Typography>
+        )}
         {concept.words && concept.words.length > 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="body2" color="text.secondary">
             {concept.words.map((w: Word) => w.word).join(', ')}
           </Typography>
         )}
