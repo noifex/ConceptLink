@@ -13,7 +13,9 @@ import {
   DialogActions,
   TextField
 } from '@mui/material';
-import { apiUrl, apiFetch } from './api';
+import { apiFetch } from './api';
+import { useAuth } from './contexts/AuthContext';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 // Outlet context type for passing data to child routes
 export type RootOutletContext = {
@@ -22,6 +24,7 @@ export type RootOutletContext = {
 
 
 function Root() {
+  const { username, logout } = useAuth();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Concept[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -30,13 +33,6 @@ function Root() {
 
   // Error notification state
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Session initialization
-  useEffect(() => {
-    apiFetch('/api/session/init', { method: 'POST' }).catch(err =>
-      console.error('セッション初期化エラー', err)
-    );
-  }, []);
 
   // Concept作成 (Optimistic Update)
   const handleCreate = async () => {
@@ -63,10 +59,9 @@ function Root() {
 
     // 4. Send request to server in background
     try {
-      const response = await fetch(apiUrl('/api/concepts'), {
+      const response = await apiFetch('/api/concepts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name: trimmedName, notes: trimmedNotes }),
       });
 
@@ -104,9 +99,8 @@ function Root() {
 
     // 2. Send delete request in background
     try {
-      const response = await fetch(apiUrl(`/api/concepts/${conceptId}`), {
-        method: 'DELETE',
-        credentials: 'include'
+      const response = await apiFetch(`/api/concepts/${conceptId}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {
@@ -129,7 +123,7 @@ function Root() {
       ? `/api/concepts/search?keyword=${encodeURIComponent(searchKeyword)}`
       : `/api/concepts`;
 
-    fetch(apiUrl(url), { credentials: 'include' })
+    apiFetch(url)
       .then(res => res.json())
       .then((data: Concept[]) => {
         setSearchResults(data);
@@ -144,6 +138,19 @@ function Root() {
         <Stack sx={{ height: "100vh" }}>
           {/* ヘッダー */}
           <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                {username}
+              </Box>
+              <Button
+                size="small"
+                startIcon={<LogoutIcon />}
+                onClick={logout}
+              >
+                ログアウト
+              </Button>
+            </Box>
+
             <SearchBox keyword={searchKeyword} setKeyword={setSearchKeyword} />
 
             <Button

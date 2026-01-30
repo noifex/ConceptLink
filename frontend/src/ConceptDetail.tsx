@@ -25,7 +25,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { Concept, Word } from './type';
 import MarkdownRenderer from './MarkdownRenderer';
-import { apiUrl } from './api';
+import { apiFetch } from './api';
 import type { RootOutletContext } from './Root';
 
 function ConceptDetail() {
@@ -60,7 +60,7 @@ function ConceptDetail() {
     setLoading(true);
     setError(null);
     
-    fetch(apiUrl(`/api/concepts/${id}`), { credentials: 'include' })
+    apiFetch(`/api/concepts/${id}`)
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTPエラー: ${res.status}`);
@@ -81,10 +81,9 @@ function ConceptDetail() {
   const handleUpdateConcept = async () => {
     if (!concept) return;
 
-    await fetch(apiUrl(`/api/concepts/${concept.id}`), {
+    await apiFetch(`/api/concepts/${concept.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ ...concept, name: editingName, notes: editingNotes })
     });
 
@@ -109,10 +108,9 @@ function ConceptDetail() {
   const handleAddWord = async () => {
     if (!concept) return;
     
-    const response = await fetch(apiUrl(`/api/concepts/${concept.id}/words`), {
+    const response = await apiFetch(`/api/concepts/${concept.id}/words`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify(newWord)
     });
     
@@ -125,10 +123,9 @@ function ConceptDetail() {
   const handleUpdateWord = async () => {
     if (!concept || !editingWord) return;
     
-    await fetch(apiUrl(`/api/concepts/${concept.id}/words/${editingWord.id}`), {
+    await apiFetch(`/api/concepts/${concept.id}/words/${editingWord.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify(editingWord)
     });
     
@@ -157,9 +154,8 @@ function ConceptDetail() {
 
     // 2. Send delete request in background
     try {
-      const response = await fetch(apiUrl(`/api/concepts/${concept.id}/words/${wordId}`), {
-        method: 'DELETE',
-        credentials: 'include'
+      const response = await apiFetch(`/api/concepts/${concept.id}/words/${wordId}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {

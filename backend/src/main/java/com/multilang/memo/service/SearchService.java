@@ -20,8 +20,8 @@ public class SearchService {
         this.wordRepository=wordRepository;
     }
 
-    public  List<Concept>search(String userId, String keyword){
-        return  conceptRepository.searchByKeyword(userId, keyword);
+    public  List<Concept>search(String username, String keyword){
+        return  conceptRepository.searchByKeyword(username, keyword);
         }
 
 
