@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 依存関係インストール
-RUN npm ci
+RUN npm install
 
 # ソースコードをコピー
 COPY . .
