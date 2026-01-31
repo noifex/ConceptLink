@@ -15,7 +15,7 @@ function AnimationDemo() {
   const [step, setStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const steps = [
     { id: 0, title: '私の課題', duration: 5000 },
@@ -630,7 +630,7 @@ function Step4RealExample() {
   const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
   const [showResult, setShowResult] = useState(false);
   const [searchResults, setSearchResults] = useState<Concept[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [_isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   // API search function
@@ -660,8 +660,6 @@ function Step4RealExample() {
 
   useEffect(() => {
     // Improved animation: Search → Result → Reset → Repeat
-    const searchTerms = ['Promise', '非同期', 'async'];
-
     const timers = [
       // CYCLE 1: Search "Promise"
       setTimeout(() => {

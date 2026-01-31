@@ -115,7 +115,7 @@ function ConceptDetail() {
     });
     
     const addedWord = await response.json();
-    setConcept({ ...concept, words: [...concept.words, addedWord] });
+    setConcept({ ...concept, words: [...(concept.words || []), addedWord] });
     setIsAddWordFormOpen(false);
     setNewWord({ word: '', language: '', ipa: '', nuance: '' });
   };
@@ -131,7 +131,7 @@ function ConceptDetail() {
     
     setConcept({
       ...concept,
-      words: concept.words.map(w => w.id === editingWord.id ? editingWord : w)
+      words: (concept.words || []).map(w => w.id === editingWord.id ? editingWord : w)
     });
     setIsEditWordFormOpen(false);
     setEditingWord(null);
@@ -143,13 +143,13 @@ function ConceptDetail() {
     if (!window.confirm('このWordを削除しますか？')) return;
 
     // Save the word for potential rollback
-    const deletedWord = concept.words.find(w => w.id === wordId);
+    const deletedWord = (concept.words || []).find(w => w.id === wordId);
     if (!deletedWord) return;
 
     // 1. Optimistically remove from UI immediately
     setConcept({
       ...concept,
-      words: concept.words.filter(w => w.id !== wordId)
+      words: (concept.words || []).filter(w => w.id !== wordId)
     });
 
     // 2. Send delete request in background
@@ -171,7 +171,7 @@ function ConceptDetail() {
         if (!prev) return prev;
         return {
           ...prev,
-          words: [...prev.words, deletedWord].sort((a, b) => a.id - b.id)
+          words: [...(prev.words || []), deletedWord].sort((a, b) => a.id - b.id)
         };
       });
       setDeleteError('Wordの削除に失敗しました。再度お試しください。');
@@ -285,7 +285,7 @@ function ConceptDetail() {
 
       {/* Words一覧 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">Words ({concept.words.length})</Typography>
+        <Typography variant="h5">Words ({(concept.words || []).length})</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -295,7 +295,7 @@ function ConceptDetail() {
         </Button>
       </Box>
 
-      {concept.words.length === 0 ? (
+      {(concept.words || []).length === 0 ? (
         <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
           Wordがありません。「新規Word追加」から追加してください。
         </Typography>
@@ -306,7 +306,7 @@ function ConceptDetail() {
           gap: 2,
           alignItems: 'flex-start'
         }}>
-          {concept.words.map((word) => {
+          {(concept.words || []).map((word) => {
             const isExpanded = expandedWords.has(word.id);
             const cardWidth = getCardWidth(word);
 
