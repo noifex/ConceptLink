@@ -5,13 +5,8 @@ FROM gradle:jdk21 AS build
 
 WORKDIR /app
 
-# Gradleキャッシュを活用するため、依存関係を先にコピー
-COPY build.gradle settings.gradle ./
-COPY gradle ./gradle
-RUN gradle dependencies --no-daemon || true
-
-# ソースコードをコピー
-COPY src ./src
+# 全ファイルをコピー
+COPY . .
 
 # JARファイルをビルド
 RUN gradle bootJar --no-daemon
@@ -35,4 +30,3 @@ EXPOSE 8080
 
 # アプリケーション起動
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
