@@ -26,8 +26,8 @@ FROM nginx:alpine
 # ビルド成果物をコピー
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx設定をコピー
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Nginx設定をコピー（build stageから取得）
+COPY --from=build /app/nginx.conf /etc/nginx/conf.d/default.conf
 
 # ポート公開
 EXPOSE 80
