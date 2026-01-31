@@ -11,6 +11,10 @@ RUN npm ci
 # ソースコードをコピー
 COPY . .
 
+# VITE_API_URLをビルド時に注入
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # 本番用ビルド
 RUN npm run build
 
