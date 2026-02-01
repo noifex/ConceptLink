@@ -191,17 +191,54 @@ function ConceptDetail() {
     });
   };
 
-  // ★ Word タイトルの長さに応じてカードの幅を決定
+  // ★ Word の全フィールド（word, ipa, nuance）の最長部分に応じてカードの幅を決定
   const getCardWidth = (word: Word): string => {
-    const titleLength = word.word?.length || 0;
+    // Strip markdown syntax for accurate length measurement
+    const stripMarkdown = (text: string): string => {
+      return text
+        .replace(/\*\*(.+?)\*\*/g, '$1')      // **bold**
+        .replace(/\*(.+?)\*/g, '$1')          // *italic*
+        .replace(/`(.+?)`/g, '$1')            // `code`
+        .replace(/\[(.+?)\]\(.+?\)/g, '$1')   // [link](url)
+        .replace(/^#+\s+/gm, '')              // # headers
+        .replace(/^[-*]\s+/gm, '');           // - list items
+    };
 
-    if (titleLength > 20) {
-      return '280px'; // 長いタイトル
-    } else if (titleLength > 10) {
-      return '220px'; // 中程度のタイトル
-    } else {
-      return '180px'; // 短いタイトル
-    }
+    // Calculate visual length accounting for CJK character width
+    const getVisualLength = (text: string): number => {
+      let length = 0;
+      for (const char of text) {
+        // CJK characters are ~1.8x wider than ASCII
+        if (/[\u3000-\u9FFF\uF900-\uFAFF]/.test(char)) {
+          length += 1.8;
+        } else {
+          length += 1;
+        }
+      }
+      return Math.ceil(length);
+    };
+
+    // Get longest line from multi-line text (for nuance markdown)
+    const getLongestLine = (text: string | null | undefined): number => {
+      if (!text) return 0;
+      const lines = text.split('\n');
+      const stripped = lines.map(line => stripMarkdown(line));
+      return Math.max(...stripped.map(line => getVisualLength(line)));
+    };
+
+    // Calculate max length across all fields
+    const maxLength = Math.max(
+      getVisualLength(word.word || ''),
+      getVisualLength(word.ipa || ''),
+      getLongestLine(word.nuance)
+    );
+
+    // Map to width tiers
+    if (maxLength <= 10) return '180px';
+    if (maxLength <= 20) return '220px';
+    if (maxLength <= 40) return '280px';
+    if (maxLength <= 60) return '360px';
+    return '440px'; // Cap to prevent layout breakage
   };
 
   // ローディング中
