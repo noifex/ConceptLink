@@ -33,8 +33,21 @@ public class AuthController {
         }
 
         // Check if username already exists
-        if (userRepository.existsByUsername(username)) {
-            return ResponseEntity.badRequest().body("このユーザー名は既に使用されています");
+        User existingUser = userRepository.findByUsername(username).orElse(null);
+
+        if (existingUser != null) {
+            // User exists - check if token is expired
+            if (existingUser.getExpiresAt().isAfter(LocalDateTime.now())) {
+                // Token still valid - user already logged in
+                return ResponseEntity.badRequest().body("このユーザー名は既に使用されています");
+            }
+
+            // Token expired - reactivate the account with new token
+            existingUser.setToken(UUID.randomUUID().toString());
+            existingUser.setExpiresAt(LocalDateTime.now().plusDays(365));
+            userRepository.save(existingUser);
+
+            return ResponseEntity.ok(new AuthResponse(existingUser.getUsername(), existingUser.getToken()));
         }
 
         // Create new user
@@ -72,7 +85,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody TokenRequest request) {
         userRepository.findByToken(request.getToken())
-            .ifPresent(userRepository::delete);
+            .ifPresent(user -> {
+                // Expire the token immediately instead of deleting the user
+                user.setExpiresAt(LocalDateTime.now().minusDays(1));
+                userRepository.save(user);
+            });
 
         return ResponseEntity.ok().build();
     }

@@ -24,4 +24,7 @@ public interface ConceptRepository extends JpaRepository<Concept, Long> {
     // 詳細取得（ID指定 + ユーザー別）
     @Query("SELECT c FROM Concept c LEFT JOIN FETCH c.words WHERE c.id = :id AND c.username = :username")
     Optional<Concept> findByIdWithWords(@Param("id") Long id, @Param("username") String username);
+
+    // 重複チェック（ユーザー別 + 名前）
+    boolean existsByUsernameAndName(String username, String name);
 }

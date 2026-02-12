@@ -19,8 +19,8 @@ public class ConceptController {
     @Autowired
     private UserRepository userRepository;
 
-    // Helper method to extract username from Authorization header
-    private String getUsernameFromToken(String authHeader) {
+    // Helper method to extract user from Authorization header
+    private User getUserFromToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Invalid authorization header");
         }
@@ -29,13 +29,24 @@ public class ConceptController {
         User user = userRepository.findByToken(token)
             .orElseThrow(() -> new RuntimeException("Invalid token"));
 
-        return user.getUsername();
+        // Check if token is expired
+        if (user.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Token expired");
+        }
+
+        return user;
+    }
+
+    // Helper method to extract username from Authorization header
+    private String getUsernameFromToken(String authHeader) {
+        return getUserFromToken(authHeader).getUsername();
     }
 
     @PostMapping
     public Concept add(@RequestHeader("Authorization") String authHeader, @RequestBody Concept concept) {
-        String username = getUsernameFromToken(authHeader);
-        concept.setUsername(username);
+        User user = getUserFromToken(authHeader);
+        concept.setUserId(user.getId().toString());
+        concept.setUsername(user.getUsername());
         return conceptRepository.save(concept);
     }
 
