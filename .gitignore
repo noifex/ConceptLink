@@ -52,7 +52,7 @@ backend/.settings/
 backend/.classpath
 backend/.project
 backend/bin/
-
+backend/FIXES_AND_LOGIN_SYSTEM.md
 # ===== Docker =====
 docker-compose.override.yml
 

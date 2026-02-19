@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Button, Container, Typography, Paper, Chip, TextField, InputAdornment } from '@mui/material';
+import { Box, Button, Container, Typography, Paper, Chip, TextField, InputAdornment, Card, CardContent, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -10,6 +10,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import SchoolIcon from '@mui/icons-material/School';
 import { apiUrl } from '../api';
 import type { Concept } from '../type';
+import MarkdownRenderer from '../MarkdownRenderer';
 
 function AnimationDemo() {
   const [step, setStep] = useState(0);
@@ -192,7 +193,7 @@ function AnimationDemo() {
             {step === 0 && 'プログラミング学習で直面する課題'}
             {step === 1 && '従来の一対一管理では構造が見えない'}
             {step === 2 && '概念を中心に整理することで構造が明確に'}
-            {step === 3 && '実際の使用例：異なる言語で検索 → 同じ概念を発見 → リセット → 繰り返し'}
+            {step === 3 && '実際の使用例：異なる言語で検索 → 同じ概念を発見'}
           </Typography>
         </Box>
       </Container>
@@ -769,16 +770,14 @@ function Step4RealExample() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Paper sx={{ p: 3, bgcolor: '#fff9c4', border: '1px solid #fbc02d', mb: 3, textAlign: 'center' }}>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                🔍 データベース検索中...
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, mb: 3 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2" color="text.secondary">
+                {currentSearchIndex === 0 && 'Searching "Promise"…'}
+                {currentSearchIndex === 1 && 'Searching "非同期"…'}
+                {currentSearchIndex === 2 && 'Searching "async"…'}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {currentSearchIndex === 0 && '英語 "Promise" で検索'}
-                {currentSearchIndex === 1 && '日本語 "非同期" で検索'}
-                {currentSearchIndex === 2 && '略語 "async" で検索'}
-              </Typography>
-            </Paper>
+            </Box>
           </motion.div>
         )}
 
@@ -833,83 +832,89 @@ function Step4RealExample() {
               exit={{ y: -30, opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Paper sx={{ p: 3, border: '2px solid #000', mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  Concept: {searchResults[0].name}
-                </Typography>
-
-                {/* Markdown対応の説明 */}
-                {searchResults[0].notes && (
-                  <Paper sx={{ p: 2, bgcolor: '#fafafa', mb: 2 }}>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {searchResults[0].notes}
+              {/* Concept card — matches real app SearchResults style */}
+              <Card sx={{ mb: 3, '&:hover': { backgroundColor: 'grey.50' } }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="h6" sx={{ flex: 1 }}>
+                      {searchResults[0].name}
                     </Typography>
-                  </Paper>
-                )}
+                    <Chip
+                      label={
+                        currentSearchIndex === 0 ? '"Promise"' :
+                        currentSearchIndex === 1 ? '"非同期"' : '"async"'
+                      }
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </Box>
 
-                {/* 単語一覧 */}
-                {searchResults[0].words && searchResults[0].words.length > 0 && (
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                      Words:
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {searchResults[0].notes && (
+                    <Box sx={{ mb: 2, color: 'text.secondary' }}>
+                      <MarkdownRenderer
+                        content={
+                          searchResults[0].notes.length > 120
+                            ? searchResults[0].notes.substring(0, 120) + '…'
+                            : searchResults[0].notes
+                        }
+                      />
+                    </Box>
+                  )}
+
+                  {/* Word cards — matches real app WordCard style */}
+                  {searchResults[0].words && searchResults[0].words.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1 }}>
                       {searchResults[0].words.map((word) => (
-                        <Chip
+                        <Card
                           key={word.id}
-                          label={`${word.word} (${word.language}${word.nuance ? ', ' + word.nuance : ''})`}
-                          sx={{ bgcolor: '#e3f2fd' }}
-                        />
+                          variant="outlined"
+                          sx={{ minWidth: 130, bgcolor: '#fafafa' }}
+                        >
+                          <CardContent sx={{ p: '12px !important' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                {word.word}
+                              </Typography>
+                              <Chip label={word.language} size="small" />
+                            </Box>
+                            {word.ipa && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {word.ipa}
+                              </Typography>
+                            )}
+                            {word.nuance && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                {word.nuance}
+                              </Typography>
+                            )}
+                          </CardContent>
+                        </Card>
                       ))}
                     </Box>
-                  </>
-                )}
-              </Paper>
+                  )}
+                </CardContent>
+              </Card>
 
-              {/* 説明（現在の検索を強調） */}
-              <Paper sx={{
-                p: 3,
-                bgcolor: currentSearchIndex === 0 ? '#e8f5e9' : currentSearchIndex === 1 ? '#fff3e0' : '#e3f2fd',
-                border: currentSearchIndex === 0 ? '2px solid #2e7d32' : currentSearchIndex === 1 ? '2px solid #f57c00' : '2px solid #1976d2',
-                transition: 'all 0.5s ease'
-              }}>
-                {currentSearchIndex === 0 && (
-                  <>
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 700, color: '#2e7d32' }}>
-                      🔍 英語で検索: "Promise"
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      → 見つかりました！
-                    </Typography>
-                  </>
-                )}
-                {currentSearchIndex === 1 && (
-                  <>
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 700, color: '#f57c00' }}>
-                      🔍 日本語で検索: "非同期"
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      → 同じConceptが見つかりました！
-                    </Typography>
-                  </>
-                )}
-                {currentSearchIndex === 2 && (
-                  <>
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 700, color: '#1976d2' }}>
-                      🔍 略語で検索: "async"
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
-                      → また同じConceptが見つかりました！
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#1976d2', mt: 2 }}>
-                      ✨ どの言語で検索しても、同じ概念にたどり着く！
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      
-                    </Typography>
-                  </>
-                )}
-              </Paper>
+              {/* Search context label */}
+              <Typography
+                variant="body2"
+                sx={{
+                  textAlign: 'center',
+                  color: currentSearchIndex === 0 ? '#2e7d32' : currentSearchIndex === 1 ? '#f57c00' : '#1976d2',
+                  fontWeight: 600,
+                  mb: currentSearchIndex === 2 ? 1 : 0
+                }}
+              >
+                {currentSearchIndex === 0 && '英語 "Promise" → 同じConceptが見つかりました'}
+                {currentSearchIndex === 1 && '日本語 "非同期" → 同じConceptが見つかりました'}
+                {currentSearchIndex === 2 && '略語 "async" → 同じConceptが見つかりました'}
+              </Typography>
+              {currentSearchIndex === 2 && (
+                <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                  どの言語で検索しても、同じ概念にたどり着く
+                </Typography>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
