@@ -22,9 +22,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         String username = request.getUsername().trim();
-
+        if (username.isEmpty() ){
+            return  ResponseEntity.badRequest().body("ユーザー名を入力してください");
+        }
         // Validation
-        if (username.isEmpty() || username.length() < 3) {
+        if (username.length() < 3) {
             return ResponseEntity.badRequest().body("ユーザー名は3文字以上必要です");
         }
 
