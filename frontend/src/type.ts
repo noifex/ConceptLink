@@ -4,6 +4,7 @@ export type Word = {
   language: string;
   ipa?: string;
   nuance?: string;
+  usedInDefinition?:boolean;
 };
 
 export type Concept = {

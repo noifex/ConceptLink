@@ -95,4 +95,12 @@ public class AuthController {
 
         return ResponseEntity.ok().build();
     }
+    @PostMapping("/invalidate-all")
+    public ResponseEntity<?> invalidateAllTokens() {
+        userRepository.findAll().forEach(user -> {
+            user.setExpiresAt(LocalDateTime.now().minusDays(1));
+            userRepository.save(user);
+        });
+        return ResponseEntity.ok("All tokens invalidated");
+    }
 }

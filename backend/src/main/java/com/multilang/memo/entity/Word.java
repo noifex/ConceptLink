@@ -20,6 +20,7 @@ public class Word {
     private  String language;
     private  String nuance;
     private  String ipa;
-
+    @Column(name = "used_in_definition",nullable = false)
+    private  Boolean usedInDefinition=false;
 
 }

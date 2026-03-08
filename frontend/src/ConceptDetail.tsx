@@ -31,7 +31,7 @@ import type { RootOutletContext } from './Root';
 function ConceptDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { onConceptDelete } = useOutletContext<RootOutletContext>();
+  const { onConceptDelete,allConcepts } = useOutletContext<RootOutletContext>();
   const [concept, setConcept] = useState<Concept | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +105,18 @@ function ConceptDetail() {
     await onConceptDelete(conceptId);
   };
 
+ //conceptlink
+    const processConceptLinks=(text:string)=>{
+        if(!text) return '';
+        return text.replace(
+           /@([^\s。．.、,\n]+)/g,
+            (match,name)=>{
+                const target=allConcepts.find(c=>c.name ===name && c.id!==concept?.id);
+                return target ?`[${name}](${target.id})` :match;
+                }
+                );
+            };
+
   const handleAddWord = async () => {
     if (!concept) return;
     
@@ -177,7 +189,30 @@ function ConceptDetail() {
       setDeleteError('Wordの削除に失敗しました。再度お試しください。');
     }
   };
+const handleToggleUsedInDefinition=async(word:Word)=>{
+    if (!concept) return;
+    const updated={... word , usedInDefinition:!word.usedInDefinition};
 
+    //optimistic update
+    setConcept({
+        ...concept,
+        words:(concept.words || []).map(w=> w.id === word.id?updated:w)
+        });
+    try{
+        await apiFetch(`/api/concepts/${concept.id}/words/${word.id}`,
+            {
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(updated)
+                });
+        }catch (error){
+            //rollback
+            setConcept({
+                ...concept,
+                words:(concept.words ||[]).map(w=>w.id===word.id?word:w)
+                });
+            }
+    };
   // ★ Word カードの展開/折りたたみをトグル
   const toggleWordExpansion = (wordId: number) => {
     setExpandedWords((prev) => {
@@ -295,9 +330,19 @@ function ConceptDetail() {
             </Typography>
             {concept.notes && (
               <Box sx={{ pl: 2 }}>
-                <MarkdownRenderer content={concept.notes} />
+                <MarkdownRenderer content={processConceptLinks(concept.notes)} />
               </Box>
             )}
+            {/*concept word tag */}
+            {(concept.words|| []).filter(w=>w.usedInDefinition).length>0 && (
+                <Box sx={{mt:1,display:'flex',gap:0.5,flexWrap:'wrap'}}>
+                    <Typography variant="caption" color="text.secondary" sx={{mr:1}}>
+                        統合元:
+                    </Typography>
+                    {(concept.words || []).filter(w=>w.usedInDefinition).map(w=>(
+                        <Chip key={w.id} label={w.word} size="small" variant="outlined" />
+                        ))}</Box>
+                )}
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <IconButton
@@ -320,7 +365,7 @@ function ConceptDetail() {
         </Box>
       </Box>
 
-      {/* Words一覧 */}
+      {/* Words一覧 (カード自体)*/}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5">Words ({(concept.words || []).length})</Typography>
         <Button
@@ -393,6 +438,16 @@ function ConceptDetail() {
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <Chip label={word.language} size="small" />
+                    <Chip
+                        label="定義に使用"
+                        size="small"
+                        color={word.usedInDefinition ? "primary": "default"}
+                        variant={word.usedInDefinition ? "filled": "outlined"}
+                        onClick={(e)=>{
+                            e.stopPropagation();
+                            handleToggleUsedInDefinition(word);
+                            }}/>
+
                     <IconButton size="small" sx={{ ml: 'auto' }}>
                       {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                     </IconButton>
@@ -449,7 +504,7 @@ function ConceptDetail() {
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
                 プレビュー:
               </Typography>
-              <MarkdownRenderer content={editingNotes} />
+              <MarkdownRenderer content={processConceptLinks(editingNotes)} />
             </Box>
           )}
         </DialogContent>

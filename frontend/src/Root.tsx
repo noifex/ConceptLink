@@ -20,6 +20,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 // Outlet context type for passing data to child routes
 export type RootOutletContext = {
   onConceptDelete: (conceptId: number) => Promise<void>;
+  allConcepts: Concept[];
 };
 
 
@@ -173,7 +174,7 @@ function Root() {
 
       {/* 右側：詳細エリア */}
       <Grid size={{ xs: 12, md: 9 }}>
-        <Outlet context={{ onConceptDelete: handleConceptDeleteFromChild } satisfies RootOutletContext} />
+        <Outlet context={{ onConceptDelete: handleConceptDeleteFromChild ,allConcepts: searchResults} satisfies RootOutletContext} />
       </Grid>
 
       {/* 新規作成モーダル */}
