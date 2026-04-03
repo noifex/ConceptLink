@@ -1,6 +1,7 @@
 package com.multilang.memo.service;
 
 import com.multilang.memo.entity.Concept;
+import com.multilang.memo.entity.User;
 import com.multilang.memo.exception.DuplicateResourceException;
 import com.multilang.memo.exception.ResourceNotFoundException;
 import com.multilang.memo.repository.ConceptRepository;
@@ -26,46 +27,34 @@ class ConceptServiceTest {
     @InjectMocks
     private ConceptService conceptService;
 
+    private User buildUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        return user;
+    }
+
     @Test
     void shouldThrowException_WhenNameIsEmpty() {
         // Given
         Concept concept = new Concept();
-        concept.setUserId("1");
-        concept.setUsername("user1");
         concept.setName("");
 
         // When & Then
-        assertThatThrownBy(() -> conceptService.createConcept(concept))
+        assertThatThrownBy(() -> conceptService.createConcept(concept, buildUser("user1")))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("name cannot be empty");
+            .hasMessageContaining("Concept名を入力してください");
     }
 
     @Test
     void shouldThrowException_WhenNameIsNull() {
         // Given
         Concept concept = new Concept();
-        concept.setUserId("1");
-        concept.setUsername("user1");
         concept.setName(null);
 
         // When & Then
-        assertThatThrownBy(() -> conceptService.createConcept(concept))
+        assertThatThrownBy(() -> conceptService.createConcept(concept, buildUser("user1")))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("name cannot be empty");
-    }
-
-    @Test
-    void shouldThrowException_WhenUsernameIsEmpty() {
-        // Given
-        Concept concept = new Concept();
-        concept.setUserId("1");
-        concept.setUsername("");
-        concept.setName("test");
-
-        // When & Then
-        assertThatThrownBy(() -> conceptService.createConcept(concept))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("username cannot be empty");
+            .hasMessageContaining("Concept名を入力してください");
     }
 
     @Test
@@ -85,12 +74,10 @@ class ConceptServiceTest {
         when(conceptRepository.existsByUsernameAndName("user1", "existing")).thenReturn(true);
 
         Concept concept = new Concept();
-        concept.setUserId("1");
-        concept.setUsername("user1");
         concept.setName("existing");
 
         // When & Then
-        assertThatThrownBy(() -> conceptService.createConcept(concept))
+        assertThatThrownBy(() -> conceptService.createConcept(concept, buildUser("user1")))
             .isInstanceOf(DuplicateResourceException.class)
             .hasMessageContaining("already exists");
 
@@ -101,20 +88,25 @@ class ConceptServiceTest {
     void shouldCreateConcept_WhenValidInputProvided() {
         // Given
         Concept concept = new Concept();
-        concept.setUserId("1");
-        concept.setUsername("user1");
         concept.setName("new concept");
 
+        Concept savedConcept = new Concept();
+        savedConcept.setId(1L);
+        savedConcept.setName("new concept");
+        savedConcept.setUsername("user1");
+
         when(conceptRepository.existsByUsernameAndName("user1", "new concept")).thenReturn(false);
-        when(conceptRepository.save(any())).thenReturn(concept);
+        when(conceptRepository.save(any())).thenReturn(savedConcept);
+        when(conceptRepository.findByIdWithWords(1L, "user1")).thenReturn(Optional.of(savedConcept));
 
         // When
-        Concept result = conceptService.createConcept(concept);
+        Concept result = conceptService.createConcept(concept, buildUser("user1"));
 
         // Then
         assertThat(result.getName()).isEqualTo("new concept");
         assertThat(result.getUsername()).isEqualTo("user1");
         verify(conceptRepository).save(concept);
+        verify(conceptRepository).findByIdWithWords(1L, "user1");
     }
 
     @Test
@@ -122,7 +114,6 @@ class ConceptServiceTest {
         // Given
         Concept concept = new Concept();
         concept.setId(1L);
-        concept.setUserId("1");
         concept.setUsername("user1");
         concept.setName("test concept");
 

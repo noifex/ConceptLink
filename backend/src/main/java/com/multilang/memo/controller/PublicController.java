@@ -1,7 +1,7 @@
 package com.multilang.memo.controller;
 
-import com.multilang.memo.entity.Concept;  // ← 修正1: Repositoryじゃなくてエンティティ
-import com.multilang.memo.service.SearchService;
+import com.multilang.memo.entity.Concept;
+import com.multilang.memo.service.ConceptService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,18 +12,18 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 public class PublicController {
 
-    private final SearchService searchService;  // ← 修正2: 変数名を小文字に
+    private final ConceptService conceptService;
     private static final String DEMO_USERNAME = "demo-user";
 
-    public PublicController(SearchService searchService) {
-        this.searchService = searchService;
+    public PublicController(ConceptService conceptService) {
+        this.conceptService = conceptService;
     }
 
     @GetMapping("/demo-concepts/search")
-    public ResponseEntity<List<Concept>> searchDemoConcepts(  // ← 修正3: List<Concept>に
+    public ResponseEntity<List<Concept>> searchDemoConcepts(
         @RequestParam String keyword
     ) {
-        List<Concept> results = searchService.search(DEMO_USERNAME, keyword);  // ← 修正4: メソッド名
+        List<Concept> results = conceptService.searchConcepts(DEMO_USERNAME, keyword);
         return ResponseEntity.ok(results);
     }
 }

@@ -36,6 +36,7 @@ function ConceptDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // モーダル用のstate
   const [isEditConceptFormOpen, setIsEditConceptFormOpen] = useState(false);
@@ -81,14 +82,23 @@ function ConceptDetail() {
   const handleUpdateConcept = async () => {
     if (!concept) return;
 
-    await apiFetch(`/api/concepts/${concept.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...concept, name: editingName, notes: editingNotes })
-    });
+    try {
+      const response = await apiFetch(`/api/concepts/${concept.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...concept, name: editingName, notes: editingNotes })
+      });
 
-    setConcept({ ...concept, name: editingName, notes: editingNotes });
-    setIsEditConceptFormOpen(false);
+      if (!response.ok) {
+        throw new Error(`更新に失敗しました (${response.status})`);
+      }
+
+      setConcept({ ...concept, name: editingName, notes: editingNotes });
+      setIsEditConceptFormOpen(false);
+    } catch (error) {
+      console.error('Concept更新エラー', error);
+      setActionError('Conceptの更新に失敗しました。再度お試しください。');
+    }
   };
 
   const handleDeleteConcept = async () => {
@@ -119,34 +129,52 @@ function ConceptDetail() {
 
   const handleAddWord = async () => {
     if (!concept) return;
-    
-    const response = await apiFetch(`/api/concepts/${concept.id}/words`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newWord)
-    });
-    
-    const addedWord = await response.json();
-    setConcept({ ...concept, words: [...(concept.words || []), addedWord] });
-    setIsAddWordFormOpen(false);
-    setNewWord({ word: '', language: '', ipa: '', nuance: '' });
+
+    try {
+      const response = await apiFetch(`/api/concepts/${concept.id}/words`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newWord)
+      });
+
+      if (!response.ok) {
+        throw new Error(`追加に失敗しました (${response.status})`);
+      }
+
+      const addedWord = await response.json();
+      setConcept({ ...concept, words: [...(concept.words || []), addedWord] });
+      setIsAddWordFormOpen(false);
+      setNewWord({ word: '', language: '', ipa: '', nuance: '' });
+    } catch (error) {
+      console.error('Word追加エラー', error);
+      setActionError('Wordの追加に失敗しました。再度お試しください。');
+    }
   };
 
   const handleUpdateWord = async () => {
     if (!concept || !editingWord) return;
-    
-    await apiFetch(`/api/concepts/${concept.id}/words/${editingWord.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingWord)
-    });
-    
-    setConcept({
-      ...concept,
-      words: (concept.words || []).map(w => w.id === editingWord.id ? editingWord : w)
-    });
-    setIsEditWordFormOpen(false);
-    setEditingWord(null);
+
+    try {
+      const response = await apiFetch(`/api/concepts/${concept.id}/words/${editingWord.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingWord)
+      });
+
+      if (!response.ok) {
+        throw new Error(`更新に失敗しました (${response.status})`);
+      }
+
+      setConcept({
+        ...concept,
+        words: (concept.words || []).map(w => w.id === editingWord.id ? editingWord : w)
+      });
+      setIsEditWordFormOpen(false);
+      setEditingWord(null);
+    } catch (error) {
+      console.error('Word更新エラー', error);
+      setActionError('Wordの更新に失敗しました。再度お試しください。');
+    }
   };
 
   const handleDeleteWord = async (wordId: number) => {
@@ -348,8 +376,8 @@ const handleToggleUsedInDefinition=async(word:Word)=>{
             <IconButton
               color="primary"
               onClick={() => {
-                setEditingName(concept.name || '');
-                setEditingNotes(concept.notes || '');
+                setEditingName(concept.name);
+                setEditingNotes(concept.notes ?? '');
                 setIsEditConceptFormOpen(true);
               }}
             >
@@ -563,7 +591,11 @@ const handleToggleUsedInDefinition=async(word:Word)=>{
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsAddWordFormOpen(false)}>キャンセル</Button>
-          <Button onClick={handleAddWord} variant="contained">追加</Button>
+          <Button
+            onClick={handleAddWord}
+            variant="contained"
+            disabled={!newWord.word?.trim() || !newWord.language?.trim()}
+          >追加</Button>
         </DialogActions>
       </Dialog>
 
@@ -633,6 +665,23 @@ const handleToggleUsedInDefinition=async(word:Word)=>{
           sx={{ width: '100%' }}
         >
           {deleteError}
+        </Alert>
+      </Snackbar>
+
+      {/* Action Error Notification Snackbar (update/add failures) */}
+      <Snackbar
+        open={!!actionError}
+        autoHideDuration={6000}
+        onClose={() => setActionError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setActionError(null)}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {actionError}
         </Alert>
       </Snackbar>
     </Box>

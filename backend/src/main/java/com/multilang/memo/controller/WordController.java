@@ -1,53 +1,66 @@
 package com.multilang.memo.controller;
-import com.multilang.memo.entity.Concept;
+
+import com.multilang.memo.entity.User;
 import com.multilang.memo.entity.Word;
-import com.multilang.memo.repository.ConceptRepository;
-import com.multilang.memo.repository.WordRepository;
+import com.multilang.memo.service.AuthService;
+import com.multilang.memo.service.WordService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/concepts/{conceptId}/words")
-
 public class WordController {
-    private  final WordRepository wordRepository;
-    private  final ConceptRepository conceptRepository;
-    public  WordController(WordRepository wordRepository,ConceptRepository conceptRepository ){
-        this.wordRepository=wordRepository;
-        this.conceptRepository=conceptRepository;
+    private final WordService wordService;
+    private final AuthService authService;
 
+    public WordController(WordService wordService, AuthService authService) {
+        this.wordService = wordService;
+        this.authService = authService;
     }
+
     @PostMapping
-    public  Word add(@PathVariable Long conceptId,@RequestBody Word word){
-        Concept concept =conceptRepository.findById(conceptId)
-                .orElseThrow(()-> new RuntimeException("Concept not found"));
-
-        word.setConcept(concept);
-        return  wordRepository.save(word);
+    public Word add(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long conceptId,
+            @RequestBody Word word) {
+        User user = authService.authenticate(authHeader);
+        return wordService.addWord(conceptId, word, user.getUsername());
     }
+
     @GetMapping
-    public List<Word> getAll(@PathVariable Long conceptId) {
-        return wordRepository.findByConceptId(conceptId);
-    }
-    @GetMapping("/{id}")
-    public  Word getById(@PathVariable Long conceptId,@PathVariable Long id){
-        return wordRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Word not found"));
-    }
-    @PutMapping("/{id}")
-    public  Word update(@PathVariable Long conceptId,@PathVariable Long id,@RequestBody Word word){
-        Word existing =wordRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Word not found"));
-        existing.setWord(word.getWord());
-        existing.setLanguage(word.getLanguage());
-        existing.setIpa(word.getIpa());
-        existing.setNuance(word.getNuance());
-        return  wordRepository.save(existing);
-    }
-    @DeleteMapping("/{id}")
-    public  void  delete(@PathVariable Long conceptId,@PathVariable Long id){
-        wordRepository.deleteById(id);
+    public List<Word> getAll(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long conceptId) {
+        User user = authService.authenticate(authHeader);
+        return wordService.getAllWords(conceptId, user.getUsername());
     }
 
+    @GetMapping("/{id}")
+    public Word getById(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long conceptId,
+            @PathVariable Long id) {
+        User user = authService.authenticate(authHeader);
+        return wordService.getWord(conceptId, id, user.getUsername());
+    }
+
+    @PutMapping("/{id}")
+    public Word update(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long conceptId,
+            @PathVariable Long id,
+            @RequestBody Word word) {
+        User user = authService.authenticate(authHeader);
+        return wordService.updateWord(conceptId, id, word, user.getUsername());
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long conceptId,
+            @PathVariable Long id) {
+        User user = authService.authenticate(authHeader);
+        wordService.deleteWord(conceptId, id, user.getUsername());
+    }
 }

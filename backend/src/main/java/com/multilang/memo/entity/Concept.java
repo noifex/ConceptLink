@@ -14,15 +14,12 @@ public class Concept {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private String userId;
-
     @Column(nullable = false, length = 50)
     private String username;
 
     private  String name;
     private  String notes;
 
-    @OneToMany(mappedBy = "concept",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "concept",cascade = CascadeType.ALL,orphanRemoval = true)
     private  List<Word> words=new ArrayList<>();
 }

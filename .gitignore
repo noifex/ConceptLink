@@ -80,3 +80,4 @@ CLAUDE.md
 .worktrees/
 .security-key
 logs/security/
+/.claude/agents/

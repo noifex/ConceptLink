@@ -27,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
         // The search query matches on concept name, notes, OR any associated word.
         conceptRepository.saveAll(List.of(
             buildConcept(
-                "demo", "demo-user",
+                "demo-user",
                 "非同期処理",
                 "async / Promise — operations that run independently of the main program flow. " +
                 "A Promise is a value that will be resolved in the future without blocking execution.",
@@ -41,9 +41,8 @@ public class DataInitializer implements CommandLineRunner {
         ));
     }
 
-    private Concept buildConcept(String userId, String username, String name, String notes, List<Word> words) {
+    private Concept buildConcept(String username, String name, String notes, List<Word> words) {
         Concept concept = new Concept();
-        concept.setUserId(userId);
         concept.setUsername(username);
         concept.setName(name);
         concept.setNotes(notes);

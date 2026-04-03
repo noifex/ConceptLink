@@ -2,9 +2,8 @@ package com.multilang.memo.controller;
 
 import com.multilang.memo.entity.Concept;
 import com.multilang.memo.entity.User;
-import com.multilang.memo.repository.ConceptRepository;
-import com.multilang.memo.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.multilang.memo.service.AuthService;
+import com.multilang.memo.service.ConceptService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,99 +12,61 @@ import java.util.List;
 @RequestMapping("/api/concepts")
 public class ConceptController {
 
-    @Autowired
-    private ConceptRepository conceptRepository;
+    private final ConceptService conceptService;
+    private final AuthService authService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    // Helper method to extract user from Authorization header
-    private User getUserFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid authorization header");
-        }
-
-        String token = authHeader.substring(7);
-        User user = userRepository.findByToken(token)
-            .orElseThrow(() -> new RuntimeException("Invalid token"));
-
-        // Check if token is expired
-        if (user.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("Token expired");
-        }
-
-        return user;
+    public  ConceptController(ConceptService conceptService,AuthService authService){
+        this.conceptService=conceptService;
+        this.authService=authService;
     }
+    // Helper method to extract user from Authorization header
 
     // Helper method to extract username from Authorization header
-    private String getUsernameFromToken(String authHeader) {
-        return getUserFromToken(authHeader).getUsername();
-    }
+    // private String getUsernameFromToken(String authHeader) {
+       // return getUserFromToken(authHeader).getUsername();
+    //}
 
     @PostMapping
-    public Concept add(@RequestHeader("Authorization") String authHeader, @RequestBody Concept concept) {
-        User user = getUserFromToken(authHeader);
-        concept.setUserId(user.getId().toString());
-        concept.setUsername(user.getUsername());
-        return conceptRepository.save(concept);
+    public Concept add(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Concept concept) {
+        User user = authService.authenticate(authHeader);
+        return conceptService.createConcept(concept,user);
     }
 
     @GetMapping  // 全件取得（ユーザー別）
-    public List<Concept> getAll(@RequestHeader("Authorization") String authHeader, @RequestParam(required = false) String query) {
-        long startTime = System.currentTimeMillis();
-        String username = getUsernameFromToken(authHeader);
-
-        List<Concept> concepts;
-        if (query != null && !query.isEmpty()) {
-            concepts = conceptRepository.searchByKeyword(username, query);
-        } else {
-            concepts = conceptRepository.findAllWithWordsEagerly(username);
-        }
-
-        long endTime = System.currentTimeMillis();
-        System.out.println("⏱️ Concept取得時間: " + (endTime - startTime) + "ms(query=" + query + ")");
-
-        return concepts;
+    public List<Concept> getAll(@RequestHeader("Authorization") String authHeader,
+                                @RequestParam(required = false) String query) {
+        User user = authService.authenticate(authHeader);
+        return conceptService.getAllConcepts(user.getUsername(),query);
     }
 
     @GetMapping("/{id}")
-    public Concept getById(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        long startTime = System.currentTimeMillis();
-        String username = getUsernameFromToken(authHeader);
-
-        Concept concept = conceptRepository.findByIdWithWords(id, username)
-            .orElseThrow(() -> new RuntimeException("Concept not found"));
-
-        long endTime = System.currentTimeMillis();
-        System.out.println("Concept詳細：" + (endTime - startTime) + "ms");
-        return concept;
+    public Concept getById(@RequestHeader("Authorization") String authHeader,
+                           @PathVariable Long id) {
+        User user = authService.authenticate(authHeader);
+        return  conceptService.getConceptById(id,user.getUsername());
     }
 
     @GetMapping("/search")
-    public List<Concept> search(@RequestHeader("Authorization") String authHeader, @RequestParam String keyword) {
-        String username = getUsernameFromToken(authHeader);
-        return conceptRepository.searchByKeyword(username, keyword);
+    public List<Concept> search(@RequestHeader("Authorization") String authHeader,
+                                @RequestParam String keyword) {
+        User user = authService.authenticate(authHeader);
+        return  conceptService.searchConcepts(user.getUsername(),keyword);
     }
 
     @PutMapping("/{id}")
-    public Concept update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Concept concept) {
-        String username = getUsernameFromToken(authHeader);
-
-        Concept existing = conceptRepository.findByIdWithWords(id, username)
-            .orElseThrow(() -> new RuntimeException("Concept not found"));
-
-        existing.setName(concept.getName());
-        existing.setNotes(concept.getNotes());
-        return conceptRepository.save(existing);
+    public Concept update(@RequestHeader("Authorization") String authHeader,
+                          @PathVariable Long id,
+                          @RequestBody Concept concept) {
+        User user = authService.authenticate(authHeader);
+        return conceptService.updateConcept(id,concept,user.getUsername());
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        String username = getUsernameFromToken(authHeader);
-
-        Concept existing = conceptRepository.findByIdWithWords(id, username)
-            .orElseThrow(() -> new RuntimeException("Concept not found"));
-
-        conceptRepository.delete(existing);
+    public void delete(@RequestHeader("Authorization") String authHeader,
+                       @PathVariable Long id) {
+        User user = authService.authenticate(authHeader);
+       conceptService.deleteConcept(id,user.getUsername());
     }
 }

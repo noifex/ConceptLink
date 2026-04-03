@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiUrl } from '../api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiUrl, registerUnauthorizedHandler } from '../api';
 
 interface AuthContextType {
   username: string | null;
@@ -56,6 +56,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(token);
     localStorage.setItem('remember_token', token);
   };
+
+  // clearAuth is the synchronous state-clear used by the 401 handler.
+  // It does not call the logout API since the token is already invalid.
+  const clearAuth = useCallback(() => {
+    setUsername(null);
+    setToken(null);
+    localStorage.removeItem('remember_token');
+  }, []);
+
+  useEffect(() => {
+    registerUnauthorizedHandler(clearAuth);
+  }, [clearAuth]);
 
   const logout = async () => {
     if (token) {

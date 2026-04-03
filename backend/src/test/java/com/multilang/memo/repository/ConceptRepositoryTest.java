@@ -165,7 +165,6 @@ public class ConceptRepositoryTest {
 
     private Concept createConcept(String username, String name) {
         Concept concept = new Concept();
-        concept.setUserId("test-user-id");
         concept.setUsername(username);
         concept.setName(name);
         return concept;
