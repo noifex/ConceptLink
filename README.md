@@ -1,169 +1,140 @@
-# 多言語概念管理システム
+# ConceptLink
 
-多言語学習者のための概念ベース語彙管理システム。直接翻訳ではなく、普遍的な概念を通じて複数言語の単語を整理します。
-
-
+多言語学習者のための概念ベース語彙管理システム。直接翻訳ではなく、普遍的な概念を通じて複数言語の単語を整理する。
 
 ## 特徴
 
--  **多言語対応**: 共通の概念を通じて複数言語の単語を紐付け
--  **リアルタイム検索**: Conceptメモと単語エントリの即時全文検索
--  **直感的UI**: Material-UIによるモダンなカードベースインターフェース
--  **1コマンドデプロイ**: 設定不要のDocker Compose
--  **パフォーマンス最適化**: N+1問題解決済み、100ms以下の応答時間
--  **完全CRUD**: 作成・読取・更新・削除の完全実装
+- **概念ベース管理**: 共通の概念を通じて複数言語の単語を紐付け
+- **リアルタイム検索**: Concept名・Notes・Wordの即時全文検索
+- **Markdown対応**: NotesとNuanceでMarkdown記法が使える
+- **Concept間リンク**: `@ConceptName` で他のConceptへリンク
+- **完全CRUD**: Concept・Word両方の作成・読取・更新・削除
+- **認証**: ユーザー名ベースのトークン認証（90日有効、自動延長）
 
-##  クイックスタート
+## 技術スタック
+
+| レイヤー | 技術 |
+|----------|------|
+| フロントエンド | React 19 / TypeScript / MUI 7 / Vite |
+| バックエンド | Go / chi / SQLite (modernc.org/sqlite, CGO不要) |
+| 旧バックエンド | Java / Spring Boot 4 / JPA / MySQL (backend/) |
+
+バックエンドはSpring Boot版からGoに移行済み。APIエンドポイントは互換を維持しているため、フロントエンドの変更は不要。
+
+## クイックスタート
 
 ### 必要環境
 
-- Docker Desktop
-- 5GB以上の空きディスク
+- Go 1.21+
+- Node.js 18+
 
-### インストール
+### 起動
+
 ```bash
-# リポジトリをクローン
-git clone https://github.com/YOUR_USERNAME/multilang-memo.git
-cd multilang-memo
+# 1. バックエンド（ターミナル1）
+cd backend-go
+go run main.go
+# → http://localhost:8080
 
-# Docker Composeで起動
-docker-compose up -d
-
-# ブラウザで開く
-open http://localhost
+# 2. フロントエンド（ターミナル2）
+cd frontend
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
-### 停止
+ブラウザで http://localhost:5173 を開いてユーザー名を登録すれば使い始められる。
+
+### バックエンドのオプション
+
 ```bash
-docker-compose down
+go run main.go -port 8080 -db conceptlink.db   # デフォルト値
+go run main.go -port 3000 -db /path/to/data.db  # カスタム
+PORT=8080 DB_PATH=./data.db go run main.go       # 環境変数でも可
 ```
 
-##  使い方
+### テスト
+
+```bash
+cd backend-go
+go test ./... -v
+```
+
+## 使い方
 
 1. **Concept作成**: 「新規Concept作成」をクリック
-2. **Word追加**: Conceptをクリック → 「+ 新規Word追加」
+2. **Word追加**: Conceptをクリック → 「新規Word追加」
 3. **検索**: 検索ボックスで即座に検索
 4. **編集・削除**: 各カードの編集・削除ボタンを使用
 
 ### 使用例
+
 ```
-Concept: "コーヒー関連飲料"
-├─ Word: "coffee" (en)
-├─ Word: "コーヒー" (ja)
-├─ Word: "咖啡" (zh)
-└─ Word: "café" (es)
-```
-
-## 💻開発
-
-### ローカル開発環境のセットアップ
-```bash
-# バックエンド
-cd backend
-./gradlew bootRun
-
-# フロントエンド（別のターミナル）
-cd frontend
-npm install
-npm run dev
-
-# MySQL（別のターミナル）
-docker run -d \
-  --name mysql-multilang \
-  -e MYSQL_ROOT_PASSWORD=password \
-  -e MYSQL_DATABASE=multilang_memo \
-  -p 3306:3306 \
-  mysql:8.0
+Concept: "挨拶"
+  Notes: 日常的な挨拶表現。@敬語 も参照。
+  ├─ Word: "hello" (en)
+  ├─ Word: "こんにちは" (ja)
+  ├─ Word: "你好" (zh)
+  └─ Word: "hola" (es)
 ```
 
-フロントエンド: http://localhost:5173  
-バックエンドAPI: http://localhost:8080
+## プロジェクト構成
 
-### プロジェクト構成
 ```
-multilang-memo/
-├── backend/              # Spring Boot REST API
-│   ├── src/
-│   │   ├── main/java/com/multilang/memo/
-│   │   │   ├── controller/
-│   │   │   ├── entity/
-│   │   │   ├── repository/
-│   │   │   └── MemoApplication.java
-│   │   └── resources/
-│   │       └── application.properties
-│   ├── build.gradle
-│   └── Dockerfile
+ConceptLink/
+├── backend-go/           # Go バックエンド（現行）
+│   ├── main.go           #   エントリポイント、ルーティング、CORS
+│   ├── db/db.go          #   SQLiteスキーマ + CRUD
+│   ├── handler/          #   auth, concept, word, public ハンドラー
+│   └── model/model.go    #   構造体・DTO
 ├── frontend/             # React SPA
 │   ├── src/
-│   │   ├── Root.tsx
-│   │   ├── ConceptDetail.tsx
-│   │   ├── SearchResults.tsx
-│   │   ├── Card.tsx
-│   │   └── type.ts
-│   ├── package.json
-│   ├── nginx.conf
-│   └── Dockerfile
-├── docker-compose.yml
-├── start-docker.sh
-├── stop-docker.sh
+│   │   ├── Root.tsx      #   レイアウト + 検索 + Concept作成
+│   │   ├── ConceptDetail.tsx  # Concept詳細 + Word管理
+│   │   ├── api.ts        #   API呼び出し + 認証ラッパー
+│   │   ├── contexts/AuthContext.tsx
+│   │   └── type.ts       #   Concept, Word 型定義
+│   └── package.json
+├── backend/              # Spring Boot バックエンド（旧）
 └── README.md
 ```
 
-## パフォーマンス
+## DBスキーマ
 
-- **検索応答時間**: 45ms（N+1問題最適化前: 167ms）
-- **初回ビルド時間**: 約3分
-- **メモリ使用量**: 全コンテナで約500MB
-- **最適化**: JOIN FETCHによりN+1クエリを解消
+SQLite。`PRAGMA foreign_keys = ON`。
 
-### 最適化前後の比較
-
-| 指標 | 最適化前 | 最適化後 | 改善率 |
-|------|---------|---------|--------|
-| API応答時間 | 167ms | 45ms | **73%高速化** |
-| データベースクエリ数 | 5回 (N+1) | 1回 | **80%削減** |
-
-##  データベーススキーマ
 ```sql
-concept
-├── id (BIGINT, PK)
-└── notes (VARCHAR)
+users (id, username UNIQUE, token UNIQUE, created_at, expires_at)
 
-words
-├── id (BIGINT, PK)
-├── word (VARCHAR)
-├── language (VARCHAR)
-├── ipa (VARCHAR, 任意)
-├── nuance (TEXT, 任意)
-└── concept_id (BIGINT, FK)
+concepts (id, username, name, notes, created_at)
+  UNIQUE(username, name)
+
+words (id, concept_id FK, word, language, ipa, nuance, used_in_definition, created_at)
+  ON DELETE CASCADE
 ```
 
-##  設定
+## APIエンドポイント
 
-### 環境変数 (.env)
-```bash
-DB_NAME=multilang_memo
-DB_PASSWORD=your_secure_password
-SHOW_SQL=false
+全エンドポイントでAuthorizationヘッダー（`Bearer <token>`）が必要（auth・publicを除く）。
+
 ```
+POST   /api/auth/register              ユーザー登録
+POST   /api/auth/verify-token          トークン検証+延長
+POST   /api/auth/logout                ログアウト
+POST   /api/auth/invalidate-all        全トークン無効化（要認証）
 
-### ポート
+GET    /api/concepts                   全Concept取得（?query= でフィルタ可）
+POST   /api/concepts                   Concept作成
+GET    /api/concepts/search?keyword=   Concept検索
+GET    /api/concepts/{id}              Concept取得（Words含む）
+PUT    /api/concepts/{id}              Concept更新
+DELETE /api/concepts/{id}              Concept削除
 
-- **フロントエンド**: 80（本番） / 5173（開発）
-- **バックエンド**: 8080
-- **MySQL**: 3306
+POST   /api/concepts/{id}/words        Word追加
+GET    /api/concepts/{id}/words        Word一覧
+GET    /api/concepts/{id}/words/{wid}  Word取得
+PUT    /api/concepts/{id}/words/{wid}  Word更新
+DELETE /api/concepts/{id}/words/{wid}  Word削除
 
-##  APIエンドポイント
-```
-GET    /api/concepts              # 全Concept取得
-GET    /api/concepts/{id}         # ID指定でConcept取得
-POST   /api/concepts              # Concept作成
-PUT    /api/concepts/{id}         # Concept更新
-DELETE /api/concepts/{id}         # Concept削除
-
-GET    /api/concepts/search?keyword={q}  # Concept検索
-
-POST   /api/concepts/{id}/words   # Conceptに単語追加
-PUT    /api/concepts/{cid}/words/{wid}  # 単語更新
-DELETE /api/concepts/{cid}/words/{wid}  # 単語削除
+GET    /api/public/demo-concepts/search?keyword=  デモ用検索（認証不要）
 ```
