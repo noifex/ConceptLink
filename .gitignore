@@ -62,22 +62,24 @@ docker-compose.override.yml
 backup/
 *.bak
 
+# ===== SQLite =====
+*.db
+*.db-shm
+*.db-wal
+
 # ===== その他 =====
 *.tmp
 *.temp
 .cache/
 coverage/
 
+# ===== Claude =====
 CLAUDE.md
-
-# Auto Claude data directory
+.claude/
 .auto-claude/
-
-# Auto Claude generated files
 .auto-claude-security.json
 .auto-claude-status
 .claude_settings.json
 .worktrees/
 .security-key
 logs/security/
-/.claude/agents/
